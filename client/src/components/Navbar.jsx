@@ -4,32 +4,24 @@ import api from "../api/axios";
 import logo from "../assets/logo.png";
 
 const fallbackCategories = [
+  { _id: "hanging-mirror", name: "Hanging mirror", slug: "hanging-mirror" },
+  { _id: "bamboo-glass", name: "Bamboo glass", slug: "bamboo-glass" },
+  { _id: "bamboo-basket", name: "Bamboo basket", slug: "bamboo-basket" },
   {
-    _id: "bamboo-furniture",
-    name: "Bamboo Furniture",
-    slug: "bamboo-furniture",
+    _id: "bamboo-file-holder",
+    name: "Bamboo file holder & tissue box",
+    slug: "bamboo-file-holder",
   },
   {
-    _id: "bamboo-home-decor",
-    name: "Bamboo Home Decor",
-    slug: "bamboo-home-decor",
+    _id: "bamboo-lamps",
+    name: "Bamboo lamps & lanterns",
+    slug: "bamboo-lamps",
   },
   {
-    _id: "bamboo-kitchen-products",
-    name: "Bamboo Kitchen Products",
-    slug: "bamboo-kitchen-products",
+    _id: "bamboo-serving-tray",
+    name: "Bamboo serving tray",
+    slug: "bamboo-serving-tray",
   },
-  {
-    _id: "handmade-bamboo-crafts",
-    name: "Handmade Bamboo Crafts",
-    slug: "handmade-bamboo-crafts",
-  },
-  {
-    _id: "eco-lifestyle-products",
-    name: "Eco Lifestyle Products",
-    slug: "eco-lifestyle-products",
-  },
-  { _id: "gift-items", name: "Gift Items", slug: "gift-items" },
 ];
 
 const Navbar = () => {
@@ -45,13 +37,11 @@ const Navbar = () => {
         const categoryList = Array.isArray(data)
           ? data
           : data.categories || data.data || [];
-
         setCategories(categoryList);
       } catch {
         setCategories([]);
       }
     };
-
     loadCategories();
   }, []);
 
@@ -62,14 +52,12 @@ const Navbar = () => {
         setProductOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const finalCategories =
     categories.length > 0 ? categories : fallbackCategories;
-
   const closeMenu = () => {
     setMenuOpen(false);
     setProductOpen(false);
@@ -77,15 +65,6 @@ const Navbar = () => {
 
   return (
     <header className="site-header">
-      <div className="top-strip">
-        <div className="container top-strip-inner">
-          <p>Manufacturer, Exporter, Wholesaler & Supplier</p>
-          <a href="mailto:contact@nurnobibamboocraft.com">
-            contact@nurnobibamboocraft.com
-          </a>
-        </div>
-      </div>
-
       <nav className="main-nav" ref={navRef}>
         <div className="container nav-inner">
           <Link to="/" className="nav-brand" onClick={closeMenu}>
@@ -109,7 +88,6 @@ const Navbar = () => {
             <NavLink to="/" onClick={closeMenu}>
               Home
             </NavLink>
-
             <NavLink to="/about" onClick={closeMenu}>
               About Us
             </NavLink>
@@ -126,11 +104,10 @@ const Navbar = () => {
                 <Link to="/products" onClick={closeMenu}>
                   All Products
                 </Link>
-
                 {finalCategories.map((cat) => (
                   <Link
                     key={cat._id || cat.slug || cat.name}
-                    to={`/products?category=${cat._id || cat.slug}`}
+                    to={`/products/${cat.slug || cat._id}`}
                     onClick={closeMenu}
                   >
                     {cat.name}
@@ -142,11 +119,9 @@ const Navbar = () => {
             <NavLink to="/gallery" onClick={closeMenu}>
               Gallery
             </NavLink>
-
             <NavLink to="/sustainability" onClick={closeMenu}>
               Sustainability
             </NavLink>
-
             <NavLink to="/contact" onClick={closeMenu}>
               Contact
             </NavLink>

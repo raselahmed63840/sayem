@@ -1,55 +1,53 @@
-import { Routes, Route } from "react-router-dom";
-
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import WhatsAppButton from "./components/WhatsAppButton";
-
-import Home from "./pages/Home";
-import About from "./pages/About";
-import ProductDescription from "./pages/ProductDescription";
-import ProductGallery from "./pages/ProductGallery";
-import ProductDetails from "./pages/ProductDetails";
-import PhotoGallery from "./pages/PhotoGallery";
-import SustainabilityCraftStory from "./pages/SustainabilityCraftStory";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
-
-import AdminRoutes from "./routes/AdminRoutes";
+import HomePage from "./pages/HomePage";
+import AboutPage from "./pages/AboutPage";
+import AllProductsPage from "./pages/AllProductsPage";
+import CategoryPage from "./pages/CategoryPage";
+import GalleryPage from "./pages/GalleryPage";
+import SustainabilityPage from "./pages/SustainabilityPage";
+import ContactPage from "./pages/ContactPage";
 
 function App() {
-  const isAdminPath = window.location.pathname.startsWith("/admin6935");
-
   return (
-    <>
-      {!isAdminPath && <Navbar />}
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/products" element={<AllProductsPage />} />
 
-      <main>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/product-description" element={<ProductDescription />} />
-          <Route path="/products" element={<ProductGallery />} />
-          <Route
-            path="/products/category/:categoryId"
-            element={<ProductGallery />}
-          />
-          <Route path="/products/:slug" element={<ProductDetails />} />
-          <Route path="/gallery" element={<PhotoGallery />} />
-          <Route
-            path="/sustainability"
-            element={<SustainabilityCraftStory />}
-          />
-          <Route path="/contact" element={<Contact />} />
+        {/* Individual category pages */}
+        <Route
+          path="/products/hanging-mirror"
+          element={<CategoryPage category="hanging-mirror" />}
+        />
+        <Route
+          path="/products/bamboo-glass"
+          element={<CategoryPage category="bamboo-glass" />}
+        />
+        <Route
+          path="/products/bamboo-basket"
+          element={<CategoryPage category="bamboo-basket" />}
+        />
+        <Route
+          path="/products/bamboo-file-holder"
+          element={<CategoryPage category="bamboo-file-holder" />}
+        />
+        <Route
+          path="/products/bamboo-lamps"
+          element={<CategoryPage category="bamboo-lamps" />}
+        />
+        <Route
+          path="/products/bamboo-serving-tray"
+          element={<CategoryPage category="bamboo-serving-tray" />}
+        />
 
-          <Route path="/admin6935/*" element={<AdminRoutes />} />
-
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-
-      {!isAdminPath && <Footer />}
-      {!isAdminPath && <WhatsAppButton />}
-    </>
+        <Route path="/gallery" element={<GalleryPage />} />
+        <Route path="/sustainability" element={<SustainabilityPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+      </Routes>
+    </Router>
   );
 }
 
