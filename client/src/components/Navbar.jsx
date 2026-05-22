@@ -4,24 +4,32 @@ import api from "../api/axios";
 import logo from "../assets/logo.png";
 
 const fallbackCategories = [
-  { _id: "hanging-mirror", name: "Hanging mirror", slug: "hanging-mirror" },
-  { _id: "bamboo-glass", name: "Bamboo glass", slug: "bamboo-glass" },
-  { _id: "bamboo-basket", name: "Bamboo basket", slug: "bamboo-basket" },
   {
-    _id: "bamboo-file-holder",
-    name: "Bamboo file holder & tissue box",
-    slug: "bamboo-file-holder",
+    _id: "bamboo-furniture",
+    name: "Bamboo Furniture",
+    slug: "bamboo-furniture",
   },
   {
-    _id: "bamboo-lamps",
-    name: "Bamboo lamps & lanterns",
-    slug: "bamboo-lamps",
+    _id: "bamboo-home-decor",
+    name: "Bamboo Home Decor",
+    slug: "bamboo-home-decor",
   },
   {
-    _id: "bamboo-serving-tray",
-    name: "Bamboo serving tray",
-    slug: "bamboo-serving-tray",
+    _id: "bamboo-kitchen-products",
+    name: "Bamboo Kitchen Products",
+    slug: "bamboo-kitchen-products",
   },
+  {
+    _id: "handmade-bamboo-crafts",
+    name: "Handmade Bamboo Crafts",
+    slug: "handmade-bamboo-crafts",
+  },
+  {
+    _id: "eco-lifestyle-products",
+    name: "Eco Lifestyle Products",
+    slug: "eco-lifestyle-products",
+  },
+  { _id: "gift-items", name: "Gift Items", slug: "gift-items" },
 ];
 
 const Navbar = () => {
@@ -30,6 +38,7 @@ const Navbar = () => {
   const [categories, setCategories] = useState([]);
   const navRef = useRef(null);
 
+  // Load categories from API
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -39,12 +48,13 @@ const Navbar = () => {
           : data.categories || data.data || [];
         setCategories(categoryList);
       } catch {
-        setCategories([]);
+        setCategories(fallbackCategories);
       }
     };
     loadCategories();
   }, []);
 
+  // Close menu if click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (navRef.current && !navRef.current.contains(event.target)) {
@@ -67,6 +77,7 @@ const Navbar = () => {
     <header className="site-header">
       <nav className="main-nav" ref={navRef}>
         <div className="container nav-inner">
+          {/* Logo */}
           <Link to="/" className="nav-brand" onClick={closeMenu}>
             <img src={logo} alt="Nurnobi Bamboo Craft" className="brand-logo" />
             <div className="brand-text">
@@ -75,6 +86,7 @@ const Navbar = () => {
             </div>
           </Link>
 
+          {/* Hamburger Menu */}
           <button
             type="button"
             className={`menu-btn ${menuOpen ? "active" : ""}`}
@@ -84,6 +96,7 @@ const Navbar = () => {
             {menuOpen ? "×" : "⋮"}
           </button>
 
+          {/* Nav Links */}
           <div className={`nav-links ${menuOpen ? "show" : ""}`}>
             <NavLink to="/" onClick={closeMenu}>
               Home
@@ -92,6 +105,7 @@ const Navbar = () => {
               About Us
             </NavLink>
 
+            {/* Products Dropdown */}
             <div className={`nav-dropdown ${productOpen ? "open" : ""}`}>
               <button
                 type="button"
@@ -101,13 +115,16 @@ const Navbar = () => {
               </button>
 
               <div className="dropdown-menu">
+                {/* All Products Page */}
                 <Link to="/products" onClick={closeMenu}>
                   All Products
                 </Link>
+
+                {/* Specific products → direct product pages */}
                 {finalCategories.map((cat) => (
                   <Link
-                    key={cat._id || cat.slug || cat.name}
-                    to={`/products/${cat.slug || cat._id}`}
+                    key={cat._id || cat.slug}
+                    to={`/products/${cat.slug}`} // Direct product page
                     onClick={closeMenu}
                   >
                     {cat.name}
