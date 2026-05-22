@@ -21,6 +21,8 @@ import ProductCategories from "./components/ProductCategories";
 import ProductListPage from "./pages/ProductListPage";
 import CategoryPage from "./pages/CategoryPage"; // dynamic category page
 
+import ProductViewPage from "./pages/ProductViewPage";
+
 function App() {
   const isAdminPath = window.location.pathname.startsWith("/admin6935");
 
@@ -48,6 +50,8 @@ function App() {
 
           {/* Product Details Integration */}
           <Route path="/products/:slug" element={<ProductDetails />} />
+
+          <Route path="/products/view/:slug" element={<ProductViewPage />} />
 
           {/* Admin Routes */}
           <Route path="/admin6935/*" element={<AdminRoutes />} />
