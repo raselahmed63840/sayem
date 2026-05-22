@@ -1,5 +1,4 @@
 const express = require("express");
-
 const {
   getGallery,
   getAdminGallery,
@@ -8,7 +7,7 @@ const {
   deleteGallery,
 } = require("../controllers/galleryController");
 
-const upload = require("../middleware/uploadMiddleware");
+const upload = require("../middleware/uploadMiddleware"); // multer
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();

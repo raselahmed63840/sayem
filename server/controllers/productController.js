@@ -11,19 +11,10 @@ const makeSlug = (text) => {
     .replace(/(^-|-$)/g, "");
 };
 
-const makeImageObject = (file) => {
-  if (!file) {
-    return {
-      url: "",
-      public_id: "",
-    };
-  }
-
-  return {
-    url: `/uploads/${file.filename}`,
-    public_id: file.filename,
-  };
-};
+const makeImageObject = (file) => ({
+  url: file ? `/uploads/${file.filename}` : "",
+  public_id: file ? file.filename : "",
+});
 
 const deleteLocalImage = (publicId) => {
   if (!publicId) return;
@@ -35,18 +26,20 @@ const deleteLocalImage = (publicId) => {
   }
 };
 
+// ================== GET ALL PRODUCTS ==================
+
 const getProducts = async (req, res) => {
   try {
     const { status, category, featured, limit = 1000 } = req.query;
 
-    const filter = {};
-
-    if (status && status !== "all") {
-      filter.status = status;
-    }
+    let filter = {};
 
     if (!status) {
       filter.status = "active";
+    }
+
+    if (status && status !== "all") {
+      filter.status = status;
     }
 
     if (category) {
@@ -59,14 +52,15 @@ const getProducts = async (req, res) => {
 
     const products = await Product.find(filter)
       .populate("category", "name slug")
-      .sort({ order: 1, createdAt: -1 })
+      .sort({
+        order: 1,
+        createdAt: -1,
+      })
       .limit(Number(limit));
-
-    const total = await Product.countDocuments(filter);
 
     res.json({
       success: true,
-      total,
+      total: products.length,
       products,
     });
   } catch (error) {
@@ -76,6 +70,8 @@ const getProducts = async (req, res) => {
     });
   }
 };
+
+// ================== GET PRODUCT BY SLUG ==================
 
 const getProductBySlug = async (req, res) => {
   try {
@@ -102,6 +98,8 @@ const getProductBySlug = async (req, res) => {
     });
   }
 };
+
+// ================== CREATE PRODUCT ==================
 
 const createProduct = async (req, res) => {
   try {
@@ -131,7 +129,7 @@ const createProduct = async (req, res) => {
     if (!title || !category) {
       return res.status(400).json({
         success: false,
-        message: "Title and category are required",
+        message: "Title and Category required",
       });
     }
 
@@ -140,20 +138,11 @@ const createProduct = async (req, res) => {
     if (!categoryExists) {
       return res.status(400).json({
         success: false,
-        message: "Invalid category selected",
+        message: "Invalid category",
       });
     }
 
     const finalSlug = slug ? makeSlug(slug) : makeSlug(title);
-
-    const exists = await Product.findOne({ slug: finalSlug });
-
-    if (exists) {
-      return res.status(400).json({
-        success: false,
-        message: "Product already exists with this slug",
-      });
-    }
 
     const uploadedImages = req.files?.length
       ? req.files.map((file) => makeImageObject(file))
@@ -162,59 +151,6 @@ const createProduct = async (req, res) => {
     const product = await Product.create({
       title,
       slug: finalSlug,
-      category,
-      productType: productType || "",
-      shortDescription: shortDescription || "",
-      description: description || "",
-      material: material || "Bamboo",
-      scientificName: scientificName || "Bambusa Vulgaris",
-      origin: origin || "Bangladesh",
-      color: color || "Natural / Any Color",
-      size: size || "As per buyer requirements",
-      moq: moq || "500-3000 pcs",
-      capacity: capacity || "20000 pcs / 90 days handmade",
-      leadTime: leadTime || "60-90 days",
-      priceType: priceType || "FOB",
-      usage: usage || "",
-      buyerRequirement:
-        buyerRequirement ||
-        "Customization available as per buyer requirements.",
-      images: uploadedImages,
-      thumbnail: uploadedImages[0] || { url: "", public_id: "" },
-      isFeatured: isFeatured === "true" || isFeatured === true,
-      status: status || "active",
-      order: Number(order) || 0,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Product created successfully",
-      product,
-    });
-  } catch (error) {
-    console.log("Product create error:", error.message);
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-const updateProduct = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
-    }
-
-    const {
-      title,
-      slug,
       category,
       productType,
       shortDescription,
@@ -230,50 +166,42 @@ const updateProduct = async (req, res) => {
       priceType,
       usage,
       buyerRequirement,
-      isFeatured,
-      status,
-      order,
-    } = req.body;
+      images: uploadedImages,
+      thumbnail: uploadedImages[0] || {},
+      isFeatured: isFeatured === "true",
+      status: status || "active",
+      order: Number(order) || 0,
+    });
 
-    if (category) {
-      const categoryExists = await Category.findById(category);
+    res.status(201).json({
+      success: true,
+      message: "Product created",
+      product,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-      if (!categoryExists) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid category selected",
-        });
-      }
+// ================== UPDATE ==================
 
-      product.category = category;
+const updateProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
     }
 
-    if (title !== undefined) product.title = title;
-    if (slug !== undefined && slug) product.slug = makeSlug(slug);
-    if (productType !== undefined) product.productType = productType;
-    if (shortDescription !== undefined)
-      product.shortDescription = shortDescription;
-    if (description !== undefined) product.description = description;
-    if (material !== undefined) product.material = material;
-    if (scientificName !== undefined) product.scientificName = scientificName;
-    if (origin !== undefined) product.origin = origin;
-    if (color !== undefined) product.color = color;
-    if (size !== undefined) product.size = size;
-    if (moq !== undefined) product.moq = moq;
-    if (capacity !== undefined) product.capacity = capacity;
-    if (leadTime !== undefined) product.leadTime = leadTime;
-    if (priceType !== undefined) product.priceType = priceType;
-    if (usage !== undefined) product.usage = usage;
-    if (buyerRequirement !== undefined)
-      product.buyerRequirement = buyerRequirement;
-    if (status !== undefined) product.status = status;
-    if (order !== undefined) product.order = Number(order) || 0;
+    Object.assign(product, req.body);
 
-    if (isFeatured !== undefined) {
-      product.isFeatured = isFeatured === "true" || isFeatured === true;
-    }
-
-    if (req.files && req.files.length > 0) {
+    if (req.files?.length) {
       product.images.forEach((img) => {
         deleteLocalImage(img.public_id);
       });
@@ -281,25 +209,26 @@ const updateProduct = async (req, res) => {
       const uploadedImages = req.files.map((file) => makeImageObject(file));
 
       product.images = uploadedImages;
-      product.thumbnail = uploadedImages[0] || { url: "", public_id: "" };
+
+      product.thumbnail = uploadedImages[0];
     }
 
     await product.save();
 
     res.json({
       success: true,
-      message: "Product updated successfully",
+      message: "Updated successfully",
       product,
     });
   } catch (error) {
-    console.log("Product update error:", error.message);
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
+
+// ================== DELETE ==================
 
 const deleteProduct = async (req, res) => {
   try {
@@ -308,7 +237,7 @@ const deleteProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Product not found",
+        message: "Not found",
       });
     }
 
@@ -320,11 +249,9 @@ const deleteProduct = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Product deleted successfully",
+      message: "Deleted successfully",
     });
   } catch (error) {
-    console.log("Product delete error:", error.message);
-
     res.status(500).json({
       success: false,
       message: error.message,

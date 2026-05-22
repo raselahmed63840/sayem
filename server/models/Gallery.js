@@ -1,41 +1,10 @@
 const mongoose = require("mongoose");
 
-const gallerySchema = new mongoose.Schema(
+const gallerySchema = mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    type: {
-      type: String,
-      enum: ["product", "factory", "craft", "story", "other"],
-      default: "product",
-    },
-
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      default: null,
-    },
-
     image: {
-      url: {
-        type: String,
-        default: "",
-      },
-      public_id: {
-        type: String,
-        default: "",
-      },
+      url: { type: String, required: true },
     },
-
-    order: {
-      type: Number,
-      default: 0,
-    },
-
     isActive: {
       type: Boolean,
       default: true,
@@ -44,4 +13,6 @@ const gallerySchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Gallery", gallerySchema);
+const Gallery = mongoose.model("Gallery", gallerySchema);
+
+module.exports = Gallery;

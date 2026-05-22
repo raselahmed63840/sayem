@@ -1,20 +1,13 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 
-const defaultForm = {
-  title: "",
-  type: "product",
-  order: 0,
-  isActive: true,
-};
-
 const AdminGallery = () => {
   const [gallery, setGallery] = useState([]);
-  const [form, setForm] = useState(defaultForm);
   const [image, setImage] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [status, setStatus] = useState("");
 
+  // Load gallery images
   const loadGallery = async () => {
     try {
       const { data } = await api.get("/gallery/admin/all");
@@ -28,29 +21,15 @@ const AdminGallery = () => {
     loadGallery();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
   const resetForm = () => {
-    setForm(defaultForm);
     setImage(null);
     setEditingId(null);
+    setStatus("");
   };
 
   const handleEdit = (item) => {
     setEditingId(item._id);
-    setForm({
-      title: item.title || "",
-      type: item.type || "product",
-      order: item.order || 0,
-      isActive: item.isActive ?? true,
-    });
+    setImage(null); // reset input for new image if needed
   };
 
   const handleDelete = async (id) => {
@@ -66,26 +45,26 @@ const AdminGallery = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!image && !editingId) {
+      setStatus("Please select an image to upload.");
+      return;
+    }
+
     setStatus("Saving...");
 
     const formData = new FormData();
-
-    Object.keys(form).forEach((key) => {
-      formData.append(key, form[key]);
-    });
-
-    if (image) {
-      formData.append("image", image);
-    }
+    if (image) formData.append("image", image);
 
     try {
       if (editingId) {
         await api.put(`/gallery/${editingId}`, formData);
+        setStatus("Gallery image updated successfully.");
       } else {
         await api.post("/gallery", formData);
+        setStatus("Gallery image added successfully.");
       }
 
-      setStatus("Gallery saved successfully.");
       resetForm();
       loadGallery();
     } catch {
@@ -96,60 +75,22 @@ const AdminGallery = () => {
   return (
     <div className="admin-page">
       <div className="admin-page-head">
-        <div>
-          <h1>Gallery</h1>
-          <p>Upload product, artisan, factory and craft story photos.</p>
-        </div>
+        <h1>Gallery</h1>
+        <p>Upload images only (Product, Artisan, Factory, or Certificate).</p>
       </div>
 
       <form className="admin-form" onSubmit={handleSubmit}>
         <input
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          placeholder="Gallery Title"
-          required
-        />
-
-        <div className="admin-grid-2">
-          <select name="type" value={form.type} onChange={handleChange}>
-            <option value="product">Product</option>
-            <option value="factory">Factory</option>
-            <option value="artisan">Artisan</option>
-            <option value="certificate">Certificate</option>
-            <option value="other">Other</option>
-          </select>
-
-          <input
-            name="order"
-            type="number"
-            value={form.order}
-            onChange={handleChange}
-            placeholder="Order"
-          />
-
-          <label className="admin-checkbox">
-            <input
-              name="isActive"
-              type="checkbox"
-              checked={form.isActive}
-              onChange={handleChange}
-            />
-            Active
-          </label>
-        </div>
-
-        <input
           type="file"
           accept="image/*"
           onChange={(e) => setImage(e.target.files[0])}
+          required={!editingId}
         />
 
         <div className="admin-actions">
           <button className="admin-btn" type="submit">
-            {editingId ? "Update Gallery" : "Add Gallery"}
+            {editingId ? "Update Image" : "Add Image"}
           </button>
-
           {editingId && (
             <button
               className="admin-btn light"
@@ -167,9 +108,7 @@ const AdminGallery = () => {
       <div className="admin-card-grid">
         {gallery.map((item) => (
           <div className="admin-card" key={item._id}>
-            <img src={item.image?.url || "/logo.png"} alt={item.title} />
-            <h3>{item.title}</h3>
-            <p>Type: {item.type}</p>
+            <img src={item.image?.url || "/logo.png"} alt="Gallery Item" />
             <p>Status: {item.isActive ? "Active" : "Inactive"}</p>
             <button onClick={() => handleEdit(item)}>Edit</button>
             <button onClick={() => handleDelete(item._id)}>Delete</button>

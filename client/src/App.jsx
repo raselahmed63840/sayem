@@ -23,6 +23,7 @@ import CategoryPage from "./pages/CategoryPage"; // dynamic category page
 
 import ProductViewPage from "./pages/ProductViewPage";
 
+import Clients from "./pages/Clients";
 function App() {
   const isAdminPath = window.location.pathname.startsWith("/admin6935");
 
@@ -42,6 +43,8 @@ function App() {
             path="/sustainability"
             element={<SustainabilityCraftStory />}
           />
+
+          <Route path="/clients" element={<Clients />} />
 
           {/* Products Routes */}
           <Route path="/products" element={<ProductsPage />} />

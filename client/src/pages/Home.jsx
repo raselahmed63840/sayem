@@ -81,8 +81,9 @@ const Home = () => {
     <>
       <SEO />
       <HeroSlider slides={sliders} />
+      <br /> <br /> <br />
       <ProductValues />
-
+      <br /> <br />
       {/* Commitment Section */}
       <section className="commitment-section py-16 bg-green-50">
         <div className="container mx-auto px-4 md:flex md:items-center md:gap-8">
@@ -121,7 +122,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
       <ProductCategories
         categories={categories}
         fallbackCategories={fallbackCategories}

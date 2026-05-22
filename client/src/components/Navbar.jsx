@@ -111,7 +111,7 @@ const Navbar = () => {
                 type="button"
                 onClick={() => setProductOpen((prev) => !prev)}
               >
-                Products <span className="caret">▾</span>
+                Products Category <span className="caret">▾</span>
               </button>
 
               <div className="dropdown-menu">
@@ -138,6 +138,9 @@ const Navbar = () => {
             </NavLink>
             <NavLink to="/sustainability" onClick={closeMenu}>
               Sustainability
+            </NavLink>
+            <NavLink to="/clients" onClick={closeMenu}>
+              Clients
             </NavLink>
             <NavLink to="/contact" onClick={closeMenu}>
               Contact

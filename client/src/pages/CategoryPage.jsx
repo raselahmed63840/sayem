@@ -1,61 +1,44 @@
-// src/pages/CategoryPage.jsx
-import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import api from "../api/axios"; // backend axios instance
+import { useEffect, useState } from "react";
+import api from "../api/axios"; // Axios instance with baseURL
 
 const CategoryPage = () => {
   const { slug } = useParams();
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setLoading(true);
-    const fetchProducts = async () => {
+    const fetchCategoryProducts = async () => {
       try {
         const res = await api.get(`/products/category/${slug}`);
-        setProducts(res.data);
+        if (!res.data.products || res.data.products.length === 0) {
+          setError("No products found in this category.");
+          return;
+        }
+        setProducts(res.data.products);
       } catch (err) {
         console.error(err);
-        setProducts([]); // fallback empty array
-      } finally {
-        setLoading(false);
+        setError("Failed to load products.");
       }
     };
-    fetchProducts();
+    fetchCategoryProducts();
   }, [slug]);
 
-  if (loading) return <p className="text-center py-12">Loading...</p>;
-
-  if (products.length === 0)
-    return (
-      <p className="text-center py-12 border border-red-400 text-red-600 rounded mx-4">
-        No products found in this category.
-      </p>
-    );
+  if (error) return <p className="text-center text-red-600 py-12">{error}</p>;
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h2 className="text-3xl font-bold mb-8 capitalize">
-        {slug.replace("-", " ")}
-      </h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="bg-white shadow-md rounded-lg overflow-hidden"
-          >
+      <h1 className="text-3xl font-bold mb-6">{slug.toUpperCase()}</h1>
+      <div className="grid md:grid-cols-3 gap-6">
+        {products.map((p) => (
+          <div key={p._id} className="bg-white p-4 rounded shadow">
             <img
-              src={product.image}
-              alt={product.title}
-              className="w-full h-48 object-cover"
+              src={p.image}
+              alt={p.title}
+              className="w-full h-48 object-cover rounded mb-2"
             />
-            <div className="p-4">
-              <h3 className="text-xl font-semibold mb-2">{product.title}</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                {product.description.substring(0, 150)}...
-              </p>
-            </div>
+            <h2 className="font-bold">{p.title}</h2>
+            <p>{p.description}</p>
           </div>
         ))}
       </div>
