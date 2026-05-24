@@ -1,4 +1,5 @@
 // src/App.jsx
+
 import { Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
@@ -7,23 +8,25 @@ import WhatsAppButton from "./components/WhatsAppButton";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
-import ProductDescription from "./pages/ProductDescription";
+import Contact from "./pages/Contact";
+
 import ProductGallery from "./pages/ProductGallery";
 import ProductDetails from "./pages/ProductDetails";
+import ProductDescription from "./pages/ProductDescription";
+
 import PhotoGallery from "./pages/PhotoGallery";
 import SustainabilityCraftStory from "./pages/SustainabilityCraftStory";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
-import ProductsPage from "./pages/ProductsPage";
-import AdminRoutes from "./routes/AdminRoutes";
-
-import ProductCategories from "./components/ProductCategories";
-import ProductListPage from "./pages/ProductListPage";
-import CategoryPage from "./pages/CategoryPage"; // dynamic category page
-
-import ProductViewPage from "./pages/ProductViewPage";
 
 import Clients from "./pages/Clients";
+
+import ProductsPage from "./pages/ProductsPage";
+import ProductListPage from "./pages/ProductListPage";
+import ProductViewPage from "./pages/ProductViewPage";
+
+import NotFound from "./pages/NotFound";
+
+import AdminRoutes from "./routes/AdminRoutes";
+
 function App() {
   const isAdminPath = window.location.pathname.startsWith("/admin6935");
 
@@ -31,35 +34,47 @@ function App() {
     <>
       {!isAdminPath && <Navbar />}
 
-      <main>
+      <main className="min-h-screen">
         <Routes>
-          {/* Home and Static Pages */}
+          {/* Home */}
           <Route path="/" element={<Home />} />
+
+          {/* Static Pages */}
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/product-description" element={<ProductDescription />} />
-          <Route path="/gallery" element={<PhotoGallery />} />
           <Route
             path="/sustainability"
             element={<SustainabilityCraftStory />}
           />
-
           <Route path="/clients" element={<Clients />} />
 
-          {/* Products Routes */}
+          {/* Gallery */}
+          <Route path="/gallery" element={<PhotoGallery />} />
+
+          {/* Product Pages */}
           <Route path="/products" element={<ProductsPage />} />
-          <Route path="/products/categories" element={<ProductCategories />} />
-          <Route path="/products/category/:slug" element={<CategoryPage />} />
 
-          {/* Product Details Integration */}
-          <Route path="/products/:slug" element={<ProductDetails />} />
+          <Route
+            path="/products/category/:categoryId"
+            element={<ProductGallery />}
+          />
 
-          <Route path="/products/view/:slug" element={<ProductViewPage />} />
+          {/* <Route path="/product-gallery" element={<ProductGallery />} />
+          <Route path="/products/:id" element={<ProductDetails />} /> */}
 
-          {/* Admin Routes */}
+          {/* <Route
+            path="/product-description/:id"
+            element={<ProductDescription />}
+          /> */}
+
+          {/* <Route path="/product-list" element={<ProductListPage />} /> */}
+
+          {/* <Route path="/product-view/:id" element={<ProductViewPage />} /> */}
+
+          {/* Admin Panel */}
           <Route path="/admin6935/*" element={<AdminRoutes />} />
 
-          {/* Not Found */}
+          {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 
+const createSlug = (text = "") =>
+  text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
 const defaultForm = {
   title: "",
   slug: "",
@@ -39,8 +48,8 @@ const AdminProducts = () => {
         api.get("/categories/admin/all"),
       ]);
 
-      setProducts(productRes.data.products || []);
-      setCategories(categoryRes.data.categories || []);
+      setProducts(productRes.data.products || productRes.data.data || []);
+      setCategories(categoryRes.data.categories || categoryRes.data.data || []);
     } catch {
       setProducts([]);
       setCategories([]);
@@ -54,16 +63,25 @@ const AdminProducts = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setForm((prev) => {
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+
+      if (name === "title") {
+        updated.slug = createSlug(value);
+      }
+
+      return updated;
+    });
   };
 
   const resetForm = () => {
     setForm(defaultForm);
     setImages([]);
     setEditingId(null);
+    setStatusText("");
   };
 
   const handleEdit = (product) => {
@@ -71,7 +89,7 @@ const AdminProducts = () => {
 
     setForm({
       title: product.title || "",
-      slug: product.slug || "",
+      slug: product.slug || createSlug(product.title || ""),
       category: product.category?._id || product.category || "",
       productType: product.productType || "",
       shortDescription: product.shortDescription || "",
@@ -86,8 +104,10 @@ const AdminProducts = () => {
       leadTime: product.leadTime || "60-90 days",
       priceType: product.priceType || "FOB",
       usage: product.usage || "",
-      buyerRequirement: product.buyerRequirement || "",
-      isFeatured: product.isFeatured || false,
+      buyerRequirement:
+        product.buyerRequirement ||
+        "Customization available as per buyer requirements.",
+      isFeatured: Boolean(product.isFeatured),
       status: product.status || "active",
       order: product.order || 0,
     });
@@ -98,7 +118,7 @@ const AdminProducts = () => {
 
     try {
       await api.delete(`/products/${id}`);
-      loadData();
+      await loadData();
     } catch {
       alert("Product delete failed.");
     }
@@ -108,11 +128,45 @@ const AdminProducts = () => {
     e.preventDefault();
     setStatusText("Saving...");
 
+    if (!form.title.trim()) {
+      setStatusText("Product title is required.");
+      return;
+    }
+
+    if (!form.category) {
+      setStatusText("Please select product category.");
+      return;
+    }
+
+    const finalSlug = form.slug || createSlug(form.title);
+
     const formData = new FormData();
 
-    Object.keys(form).forEach((key) => {
-      formData.append(key, form[key]);
-    });
+    formData.append("title", form.title);
+    formData.append("name", form.title);
+    formData.append("slug", finalSlug);
+    formData.append("category", form.category);
+    formData.append("categoryId", form.category);
+
+    formData.append("productType", form.productType);
+    formData.append("shortDescription", form.shortDescription);
+    formData.append("description", form.description);
+
+    formData.append("material", form.material);
+    formData.append("scientificName", form.scientificName);
+    formData.append("origin", form.origin);
+    formData.append("color", form.color);
+    formData.append("size", form.size);
+    formData.append("moq", form.moq);
+    formData.append("capacity", form.capacity);
+    formData.append("leadTime", form.leadTime);
+    formData.append("priceType", form.priceType);
+    formData.append("usage", form.usage);
+    formData.append("buyerRequirement", form.buyerRequirement);
+
+    formData.append("status", form.status);
+    formData.append("order", Number(form.order || 0));
+    formData.append("isFeatured", form.isFeatured ? "true" : "false");
 
     Array.from(images).forEach((img) => {
       formData.append("images", img);
@@ -127,7 +181,7 @@ const AdminProducts = () => {
 
       setStatusText("Product saved successfully.");
       resetForm();
-      loadData();
+      await loadData();
     } catch (error) {
       setStatusText(error.response?.data?.message || "Product save failed.");
     }
@@ -151,11 +205,13 @@ const AdminProducts = () => {
             placeholder="Product Title"
             required
           />
+
           <input
             name="slug"
             value={form.slug}
             onChange={handleChange}
-            placeholder="Slug optional"
+            placeholder="Slug"
+            required
           />
 
           <select
@@ -199,62 +255,32 @@ const AdminProducts = () => {
             name="material"
             value={form.material}
             onChange={handleChange}
-            placeholder="Material"
           />
           <input
             name="scientificName"
             value={form.scientificName}
             onChange={handleChange}
-            placeholder="Scientific Name"
           />
-          <input
-            name="origin"
-            value={form.origin}
-            onChange={handleChange}
-            placeholder="Origin"
-          />
-          <input
-            name="color"
-            value={form.color}
-            onChange={handleChange}
-            placeholder="Color"
-          />
-          <input
-            name="size"
-            value={form.size}
-            onChange={handleChange}
-            placeholder="Size"
-          />
-          <input
-            name="moq"
-            value={form.moq}
-            onChange={handleChange}
-            placeholder="MOQ"
-          />
+          <input name="origin" value={form.origin} onChange={handleChange} />
+          <input name="color" value={form.color} onChange={handleChange} />
+          <input name="size" value={form.size} onChange={handleChange} />
+          <input name="moq" value={form.moq} onChange={handleChange} />
           <input
             name="capacity"
             value={form.capacity}
             onChange={handleChange}
-            placeholder="Capacity"
           />
           <input
             name="leadTime"
             value={form.leadTime}
             onChange={handleChange}
-            placeholder="Lead Time"
           />
           <input
             name="priceType"
             value={form.priceType}
             onChange={handleChange}
-            placeholder="Price Type e.g. FOB"
           />
-          <input
-            name="usage"
-            value={form.usage}
-            onChange={handleChange}
-            placeholder="Usage"
-          />
+          <input name="usage" value={form.usage} onChange={handleChange} />
         </div>
 
         <textarea
@@ -343,12 +369,17 @@ const AdminProducts = () => {
                   />
                 </td>
                 <td>{product.title}</td>
-                <td>{product.category?.name}</td>
+                <td>{product.category?.name || "No Category"}</td>
                 <td>{product.isFeatured ? "Yes" : "No"}</td>
                 <td>{product.status}</td>
                 <td>
-                  <button onClick={() => handleEdit(product)}>Edit</button>
-                  <button onClick={() => handleDelete(product._id)}>
+                  <button type="button" onClick={() => handleEdit(product)}>
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(product._id)}
+                  >
                     Delete
                   </button>
                 </td>

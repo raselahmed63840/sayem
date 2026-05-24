@@ -1,61 +1,42 @@
-const fs = require("fs");
-const path = require("path");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
 
-const makeSlug = (text) => {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-};
-
-const makeImageObject = (file) => ({
-  url: file ? `/uploads/${file.filename}` : "",
-  public_id: file ? file.filename : "",
-});
-
-const deleteLocalImage = (publicId) => {
-  if (!publicId) return;
-
-  const imagePath = path.join(__dirname, "../uploads", publicId);
-
-  if (fs.existsSync(imagePath)) {
-    fs.unlinkSync(imagePath);
-  }
-};
-
-// ================== GET ALL PRODUCTS ==================
-
 const getProducts = async (req, res) => {
   try {
-    const { status, category, featured, limit = 1000 } = req.query;
+    const { category, search, featured, status, limit = 100 } = req.query;
 
-    let filter = {};
+    const filter = {};
 
-    if (!status) {
-      filter.status = "active";
-    }
-
-    if (status && status !== "all") {
-      filter.status = status;
-    }
+    filter.status = status || "active";
 
     if (category) {
-      filter.category = category;
+      const categoryDoc = await Category.findOne({
+        $or: [
+          { slug: category },
+          /^[0-9a-fA-F]{24}$/.test(category) ? { _id: category } : null,
+        ].filter(Boolean),
+      });
+
+      filter.category = categoryDoc ? categoryDoc._id : null;
     }
 
     if (featured === "true") {
       filter.isFeatured = true;
     }
 
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
+        { productType: { $regex: search, $options: "i" } },
+        { shortDescription: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
     const products = await Product.find(filter)
-      .populate("category", "name slug")
-      .sort({
-        order: 1,
-        createdAt: -1,
-      })
+      .populate("category", "name slug description image")
+      .sort({ order: 1, createdAt: -1 })
       .limit(Number(limit));
 
     res.json({
@@ -71,14 +52,34 @@ const getProducts = async (req, res) => {
   }
 };
 
-// ================== GET PRODUCT BY SLUG ==================
-
-const getProductBySlug = async (req, res) => {
+const getFeaturedProducts = async (req, res) => {
   try {
-    const product = await Product.findOne({
-      slug: req.params.slug,
+    const products = await Product.find({
       status: "active",
-    }).populate("category", "name slug");
+      isFeatured: true,
+    })
+      .populate("category", "name slug description image")
+      .sort({ order: 1, createdAt: -1 })
+      .limit(12);
+
+    res.json({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const getProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate(
+      "category",
+      "name slug description image",
+    );
 
     if (!product) {
       return res.status(404).json({
@@ -99,83 +100,47 @@ const getProductBySlug = async (req, res) => {
   }
 };
 
-// ================== CREATE PRODUCT ==================
+const createSlug = (text = "") => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
 
 const createProduct = async (req, res) => {
   try {
-    const {
-      title,
-      slug,
-      category,
-      productType,
-      shortDescription,
-      description,
-      material,
-      scientificName,
-      origin,
-      color,
-      size,
-      moq,
-      capacity,
-      leadTime,
-      priceType,
-      usage,
-      buyerRequirement,
-      isFeatured,
-      status,
-      order,
-    } = req.body;
+    const productData = { ...req.body };
 
-    if (!title || !category) {
+    if (!productData.title && productData.name) {
+      productData.title = productData.name;
+    }
+
+    if (!productData.name && productData.title) {
+      productData.name = productData.title;
+    }
+
+    if (!productData.slug && productData.title) {
+      productData.slug = createSlug(productData.title);
+    }
+
+    if (!productData.category && productData.categoryId) {
+      productData.category = productData.categoryId;
+    }
+
+    if (!productData.category) {
       return res.status(400).json({
         success: false,
-        message: "Title and Category required",
+        message: "Please select product category.",
       });
     }
 
-    const categoryExists = await Category.findById(category);
-
-    if (!categoryExists) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid category",
-      });
-    }
-
-    const finalSlug = slug ? makeSlug(slug) : makeSlug(title);
-
-    const uploadedImages = req.files?.length
-      ? req.files.map((file) => makeImageObject(file))
-      : [];
-
-    const product = await Product.create({
-      title,
-      slug: finalSlug,
-      category,
-      productType,
-      shortDescription,
-      description,
-      material,
-      scientificName,
-      origin,
-      color,
-      size,
-      moq,
-      capacity,
-      leadTime,
-      priceType,
-      usage,
-      buyerRequirement,
-      images: uploadedImages,
-      thumbnail: uploadedImages[0] || {},
-      isFeatured: isFeatured === "true",
-      status: status || "active",
-      order: Number(order) || 0,
-    });
+    const product = await Product.create(productData);
 
     res.status(201).json({
       success: true,
-      message: "Product created",
       product,
     });
   } catch (error) {
@@ -186,11 +151,12 @@ const createProduct = async (req, res) => {
   }
 };
 
-// ================== UPDATE ==================
-
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!product) {
       return res.status(404).json({
@@ -199,25 +165,8 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    Object.assign(product, req.body);
-
-    if (req.files?.length) {
-      product.images.forEach((img) => {
-        deleteLocalImage(img.public_id);
-      });
-
-      const uploadedImages = req.files.map((file) => makeImageObject(file));
-
-      product.images = uploadedImages;
-
-      product.thumbnail = uploadedImages[0];
-    }
-
-    await product.save();
-
     res.json({
       success: true,
-      message: "Updated successfully",
       product,
     });
   } catch (error) {
@@ -228,28 +177,20 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// ================== DELETE ==================
-
 const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findByIdAndDelete(req.params.id);
 
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Not found",
+        message: "Product not found",
       });
     }
 
-    product.images.forEach((img) => {
-      deleteLocalImage(img.public_id);
-    });
-
-    await product.deleteOne();
-
     res.json({
       success: true,
-      message: "Deleted successfully",
+      message: "Product deleted successfully",
     });
   } catch (error) {
     res.status(500).json({
@@ -261,7 +202,8 @@ const deleteProduct = async (req, res) => {
 
 module.exports = {
   getProducts,
-  getProductBySlug,
+  getFeaturedProducts,
+  getProduct,
   createProduct,
   updateProduct,
   deleteProduct,
