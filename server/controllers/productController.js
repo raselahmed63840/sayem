@@ -1,21 +1,72 @@
 const Product = require("../models/Product");
 const Category = require("../models/Category");
 
+const createSlug = (text = "") => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+};
+
+const normalizeBoolean = (value) => {
+  return value === true || value === "true" || value === "on" || value === "1";
+};
+
+const buildImageData = (files = []) => {
+  return files.map((file) => ({
+    url: `/uploads/${file.filename}`,
+    public_id: file.filename,
+  }));
+};
+
+const prepareProductData = (body, files = []) => {
+  const data = { ...body };
+
+  data.title = data.title || data.name;
+  data.name = data.name || data.title;
+  data.slug = data.slug || createSlug(data.title);
+  data.category = data.category || data.categoryId;
+
+  data.isFeatured = normalizeBoolean(data.isFeatured);
+  data.order = Number(data.order || 0);
+
+  if (!data.status) {
+    data.status = "active";
+  }
+
+  const uploadedImages = buildImageData(files);
+
+  if (uploadedImages.length > 0) {
+    data.images = uploadedImages;
+    data.thumbnail = uploadedImages[0];
+  }
+
+  return data;
+};
+
 const getProducts = async (req, res) => {
   try {
     const { category, search, featured, status, limit = 100 } = req.query;
 
     const filter = {};
 
-    filter.status = status || "active";
+    if (status && status !== "all") {
+      filter.status = status;
+    } else if (!status) {
+      filter.status = "active";
+    }
 
     if (category) {
-      const categoryDoc = await Category.findOne({
-        $or: [
-          { slug: category },
-          /^[0-9a-fA-F]{24}$/.test(category) ? { _id: category } : null,
-        ].filter(Boolean),
-      });
+      const categoryQuery = [{ slug: category }];
+
+      if (/^[0-9a-fA-F]{24}$/.test(category)) {
+        categoryQuery.push({ _id: category });
+      }
+
+      const categoryDoc = await Category.findOne({ $or: categoryQuery });
 
       filter.category = categoryDoc ? categoryDoc._id : null;
     }
@@ -100,34 +151,22 @@ const getProduct = async (req, res) => {
   }
 };
 
-const createSlug = (text = "") => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-};
-
 const createProduct = async (req, res) => {
   try {
-    const productData = { ...req.body };
+    const productData = prepareProductData(req.body, req.files);
 
-    if (!productData.title && productData.name) {
-      productData.title = productData.name;
+    if (!productData.title) {
+      return res.status(400).json({
+        success: false,
+        message: "Product title is required.",
+      });
     }
 
-    if (!productData.name && productData.title) {
-      productData.name = productData.title;
-    }
-
-    if (!productData.slug && productData.title) {
-      productData.slug = createSlug(productData.title);
-    }
-
-    if (!productData.category && productData.categoryId) {
-      productData.category = productData.categoryId;
+    if (!productData.slug) {
+      return res.status(400).json({
+        success: false,
+        message: "Product slug is required.",
+      });
     }
 
     if (!productData.category) {
@@ -144,7 +183,7 @@ const createProduct = async (req, res) => {
       product,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: error.message,
     });
@@ -153,24 +192,37 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const productData = prepareProductData(req.body, req.files);
 
-    if (!product) {
+    const existingProduct = await Product.findById(req.params.id);
+
+    if (!existingProduct) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
 
+    if (!req.files || req.files.length === 0) {
+      delete productData.images;
+      delete productData.thumbnail;
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      productData,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
     res.json({
       success: true,
       product,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       message: error.message,
     });
