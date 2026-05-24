@@ -1,46 +1,23 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-const BACKEND_URL = API_URL.replace(/\/api\/?$/, "");
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000";
 
-export const getImageUrl = (image, fallback = "/logo.png") => {
-  try {
-    const url = typeof image === "string" ? image : image?.url;
+const getImageUrl = (image) => {
+  if (!image) return "/logo.png";
 
-    if (!url) return fallback;
-
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-
-    if (url.startsWith("/")) {
-      return `${BACKEND_URL}${url}`;
-    }
-
-    return `${BACKEND_URL}/${url}`;
-  } catch {
-    return fallback;
-  }
-};
-
-export const optimizeCloudinaryImage = (image, options = {}) => {
-  const fallback = options.fallback || "/logo.png";
-  const url = getImageUrl(image, fallback);
-
-  if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
-    return url;
+  if (typeof image === "string") {
+    if (image.startsWith("http")) return image;
+    if (image.startsWith("/uploads")) return `${API_BASE_URL}${image}`;
+    return image;
   }
 
-  const width = options.width || 1600;
-  const height = options.height;
-  const quality = options.quality || "auto";
-  const format = options.format || "auto";
-
-  const transforms = [`f_${format}`, `q_${quality}`, `w_${width}`];
-
-  if (height) {
-    transforms.push(`h_${height}`, "c_fill");
+  if (image.url) {
+    if (image.url.startsWith("http")) return image.url;
+    if (image.url.startsWith("/uploads")) return `${API_BASE_URL}${image.url}`;
+    return image.url;
   }
 
-  return url.replace("/upload/", `/upload/${transforms.join(",")}/`);
+  return "/logo.png";
 };
 
 export default getImageUrl;
+s;

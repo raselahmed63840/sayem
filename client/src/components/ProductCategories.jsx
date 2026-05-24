@@ -85,13 +85,11 @@ const ProductCategories = ({ categories }) => {
         <p>Browse eco-friendly bamboo products</p>
 
         <div className="category-menu">
-          {categories.map((cat) => (
-            <Link
-              to={`/products/category/${cat.slug}`}
-              className="px-4 py-2 bg-yellow-400 rounded hover:bg-green-600 hover:text-white"
-            >
-              {cat.name.toUpperCase()}
-            </Link>
+          {categories.map((category, index) => (
+            <CategoryCard
+              key={category._id || category.slug || index}
+              category={category}
+            />
           ))}
         </div>
       </div>

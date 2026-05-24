@@ -126,11 +126,7 @@ const ProductGallery = () => {
 
             <div>
               <img
-                src={
-                  selectedCategory?.image?.url ||
-                  selectedCategory?.image ||
-                  "/images/product-hero.jpg"
-                }
+                src={getImageUrl(selectedCategory?.image)}
                 alt={title}
                 className="h-[250px] w-full object-cover"
               />
@@ -148,7 +144,9 @@ const ProductGallery = () => {
               {products.map((product) => (
                 <div key={product._id} className="bg-white">
                   <img
-                    src={getImageUrl(product.image || product.images?.[0])}
+                    src={getImageUrl(
+                      product.thumbnail || product.images?.[0] || product.image,
+                    )}
                     alt={product.title || product.name}
                     className="h-[170px] w-full object-contain"
                   />
