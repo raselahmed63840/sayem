@@ -28,18 +28,26 @@ import Category from "../models/Category.js";
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  const categories = await Category.find().select("title slug");
-  res.json(categories);
+  try {
+    const categories = await Category.find();
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 router.get("/:slug", async (req, res) => {
-  const category = await Category.findOne({ slug: req.params.slug });
+  try {
+    const category = await Category.findOne({ slug: req.params.slug });
 
-  if (!category) {
-    return res.status(404).json({ message: "Category not found" });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  res.json(category);
 });
 
 export default router;
