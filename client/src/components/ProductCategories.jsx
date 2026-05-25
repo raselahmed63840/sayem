@@ -75,6 +75,7 @@
 // export default ProductCategories;
 
 import { Link } from "react-router-dom";
+import CategoryCard from "./CategoryCard";
 
 const ProductCategories = ({ categories }) => {
   return (
