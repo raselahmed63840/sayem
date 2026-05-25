@@ -1,40 +1,22 @@
 const express = require("express");
-const Category = require("../models/Category");
+const {
+  getCategories,
+  getAdminCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} = require("../controllers/categoryController");
+
+const upload = require("../middleware/uploadMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// GET ALL CATEGORIES
-router.get("/", async (req, res) => {
-  try {
-    const categories = await Category.find();
+router.get("/", getCategories);
+router.get("/admin/all", protect, getAdminCategories);
 
-    res.json(categories);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
-
-// GET CATEGORY BY SLUG
-router.get("/:slug", async (req, res) => {
-  try {
-    const category = await Category.findOne({
-      slug: req.params.slug,
-    });
-
-    if (!category) {
-      return res.status(404).json({
-        message: "Category not found",
-      });
-    }
-
-    res.json(category);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
+router.post("/", protect, upload.single("image"), createCategory);
+router.put("/:id", protect, upload.single("image"), updateCategory);
+router.delete("/:id", protect, deleteCategory);
 
 module.exports = router;

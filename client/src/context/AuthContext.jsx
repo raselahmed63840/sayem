@@ -19,10 +19,15 @@ export const AuthProvider = ({ children }) => {
         name: "Rasel Ahmed",
         email: DEFAULT_ADMIN_EMAIL,
         role: "admin",
+        token: "local-admin-token",
       };
 
       localStorage.setItem("adminToken", "local-admin-token");
       localStorage.setItem("adminData", JSON.stringify(adminData));
+      localStorage.setItem(
+        "adminInfo",
+        JSON.stringify({ token: "local-admin-token" }),
+      );
 
       setAdmin(adminData);
 
@@ -39,6 +44,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminData");
+    localStorage.removeItem("adminInfo");
     setAdmin(null);
   };
 
