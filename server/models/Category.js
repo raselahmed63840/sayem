@@ -1,48 +1,26 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const categorySchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
+    slug: { type: String, required: true, unique: true },
+    title: { type: String, required: true },
+    bannerImage: String,
+    rawImage: String,
+    description: String,
+    productDetails: {
+      material: String,
+      care: String,
+      origin: String,
+      color: String,
+      size: String,
+      moq: String,
+      capacity: String,
+      leadTime: String,
+      price: String,
     },
-
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
-
-    description: {
-      type: String,
-      default: "",
-    },
-
-    image: {
-      url: {
-        type: String,
-        default: "",
-      },
-      public_id: {
-        type: String,
-        default: "",
-      },
-    },
-
-    order: {
-      type: Number,
-      default: 0,
-    },
-
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    galleryImages: [String],
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model("Category", categorySchema);
+export default mongoose.model("Category", categorySchema);

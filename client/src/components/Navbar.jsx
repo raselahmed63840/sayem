@@ -124,7 +124,7 @@ const Navbar = () => {
                 {finalCategories.map((cat) => (
                   <Link
                     key={cat._id || cat.slug}
-                    to={`/products/${cat.slug}`} // Direct product page
+                    to={`/category/${cat.slug}`} // Direct product page
                     onClick={closeMenu}
                   >
                     {cat.name}
