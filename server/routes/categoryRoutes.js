@@ -1,53 +1,40 @@
-// const express = require("express");
-
-// const {
-//   getCategories,
-//   getAdminCategories,
-//   createCategory,
-//   updateCategory,
-//   deleteCategory,
-// } = require("../controllers/categoryController");
-
-// const upload = require("../middleware/uploadMiddleware");
-// const { protect } = require("../middleware/authMiddleware");
-
-// const router = express.Router();
-
-// router.get("/", getCategories);
-// router.get("/admin/all", protect, getAdminCategories);
-
-// router.post("/", protect, upload.single("image"), createCategory);
-// router.put("/:id", protect, upload.single("image"), updateCategory);
-// router.delete("/:id", protect, deleteCategory);
-
-// module.exports = router;
-
-import express from "express";
-import Category from "../models/Category.js";
+const express = require("express");
+const Category = require("../models/Category");
 
 const router = express.Router();
 
+// GET ALL CATEGORIES
 router.get("/", async (req, res) => {
   try {
     const categories = await Category.find();
+
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 });
 
+// GET CATEGORY BY SLUG
 router.get("/:slug", async (req, res) => {
   try {
-    const category = await Category.findOne({ slug: req.params.slug });
+    const category = await Category.findOne({
+      slug: req.params.slug,
+    });
 
     if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({
+        message: "Category not found",
+      });
     }
 
     res.json(category);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      message: error.message,
+    });
   }
 });
 
-export default router;
+module.exports = router;
